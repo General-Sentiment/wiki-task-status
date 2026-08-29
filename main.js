@@ -1,28 +1,15 @@
-const { MarkdownRenderChild, Plugin, TFile } = require("obsidian");
+const { MarkdownRenderChild, Plugin, PluginSettingTab, Setting, TFile } = require("obsidian");
 
-const TASK_CATEGORY = "todo";
+const DEFAULT_SETTINGS = {
+  propertyName: "done"
+};
 
-function hasTodoCategory(value) {
-  const values = Array.isArray(value) ? value : value == null ? [] : [value];
-  return values.some((item) => {
-    const normalized = String(item)
-      .replace(/^\[\[/, "")
-      .replace(/\]\]$/, "")
-      .split("|")[0]
-      .trim()
-      .toLowerCase();
-    return normalized === TASK_CATEGORY;
-  });
+function hasTaskProperty(cache, propertyName) {
+  return Object.prototype.hasOwnProperty.call(cache?.frontmatter ?? {}, propertyName);
 }
 
-function isTaskFile(file, cache) {
-  if (!file) return false;
-  if (file.path.toLowerCase().startsWith("todo/")) return true;
-  return hasTodoCategory(cache?.frontmatter?.categories);
-}
-
-function isDone(cache) {
-  const value = cache?.frontmatter?.done;
+function isDone(cache, propertyName) {
+  const value = cache?.frontmatter?.[propertyName];
   return value !== undefined && value !== null && value !== false && value !== "";
 }
 
@@ -59,7 +46,10 @@ class WikiTaskRenderChild extends MarkdownRenderChild {
       type: "checkbox",
       attr: {
         "aria-label": `Toggle task ${this.file.basename}`,
-        "data-task": isDone(this.plugin.app.metadataCache.getFileCache(this.file)) ? "x" : ""
+        "data-task": isDone(
+          this.plugin.app.metadataCache.getFileCache(this.file),
+          this.plugin.settings.propertyName
+        ) ? "x" : ""
       }
     });
     this.checkbox.addClass("task-list-item-checkbox");
@@ -85,7 +75,7 @@ class WikiTaskRenderChild extends MarkdownRenderChild {
     this.checkbox.disabled = true;
     try {
       await this.plugin.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
-        frontmatter.done = nextDone ? localTimestamp() : null;
+        frontmatter[this.plugin.settings.propertyName] = nextDone ? localTimestamp() : null;
       });
     } catch (error) {
       console.error("Wiki Task Status: unable to update task", error);
@@ -97,7 +87,10 @@ class WikiTaskRenderChild extends MarkdownRenderChild {
   };
 
   refresh() {
-    const done = isDone(this.plugin.app.metadataCache.getFileCache(this.file));
+    const done = isDone(
+      this.plugin.app.metadataCache.getFileCache(this.file),
+      this.plugin.settings.propertyName
+    );
     this.checkbox.checked = done;
     this.checkbox.dataset.task = done ? "x" : "";
     this.paragraph.toggleClass("is-checked", done);
@@ -106,6 +99,9 @@ class WikiTaskRenderChild extends MarkdownRenderChild {
 
 module.exports = class WikiTaskStatusPlugin extends Plugin {
   async onload() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.addSettingTab(new WikiTaskStatusSettingTab(this.app, this));
+
     this.registerMarkdownPostProcessor((element, context) => {
       for (const paragraph of element.querySelectorAll("p")) {
         const link = standaloneInternalLink(paragraph);
@@ -116,7 +112,12 @@ module.exports = class WikiTaskStatusPlugin extends Plugin {
 
         const file = this.app.metadataCache.getFirstLinkpathDest(destination, context.sourcePath);
         if (!(file instanceof TFile)) continue;
-        if (!isTaskFile(file, this.app.metadataCache.getFileCache(file))) continue;
+        if (
+          !hasTaskProperty(
+            this.app.metadataCache.getFileCache(file),
+            this.settings.propertyName
+          )
+        ) continue;
 
         context.addChild(
           new WikiTaskRenderChild(element, this, context.sourcePath, file, paragraph, link)
@@ -125,3 +126,27 @@ module.exports = class WikiTaskStatusPlugin extends Plugin {
     });
   }
 };
+
+class WikiTaskStatusSettingTab extends PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display() {
+    this.containerEl.empty();
+
+    new Setting(this.containerEl)
+      .setName("Task property")
+      .setDesc("A linked note with this property renders as a task. A value means complete; an empty value means open.")
+      .addText((text) =>
+        text
+          .setPlaceholder("done")
+          .setValue(this.plugin.settings.propertyName)
+          .onChange(async (value) => {
+            this.plugin.settings.propertyName = value.trim() || DEFAULT_SETTINGS.propertyName;
+            await this.plugin.saveData(this.plugin.settings);
+          })
+      );
+  }
+}
