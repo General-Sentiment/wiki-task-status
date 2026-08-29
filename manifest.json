@@ -1,0 +1,9 @@
+{
+  "id": "wiki-task-status",
+  "name": "Wiki Task Status",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Render standalone wikilinks to task notes as checkboxes reflecting their done status.",
+  "author": "JK",
+  "isDesktopOnly": false
+}

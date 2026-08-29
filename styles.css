@@ -1,0 +1,18 @@
+.markdown-rendered p.wiki-task-status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--size-2-2);
+  margin-block: var(--p-spacing);
+}
+
+.markdown-rendered p.wiki-task-status > input.task-list-item-checkbox {
+  flex: 0 0 auto;
+  margin: 0;
+  transform: translateY(0.12em);
+}
+
+.markdown-rendered p.wiki-task-status.is-checked > .wiki-task-status-link {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
