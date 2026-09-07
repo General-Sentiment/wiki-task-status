@@ -6,7 +6,7 @@ Wiki Task Status turns a standalone wikilink to a task note into a checkbox. The
 [[Renew car registration]]
 ```
 
-In Reading view, that link renders like an Obsidian task. Checking it completes the linked note, and every other standalone reference reflects the change.
+In Reading view and Live Preview, that link renders like an Obsidian task. Checking it completes the linked note, and every other standalone reference reflects the change.
 
 ## Task notes
 
@@ -53,7 +53,7 @@ Links to notes without the configured property also remain ordinary links.
 
 ## View support
 
-The checkbox appears in Reading view. Source mode and Live Preview continue to display the original wikilink, keeping the Markdown portable and easy to edit.
+The checkbox appears in Reading view and Live Preview. Live Preview keeps the original wikilink editable while displaying the synthetic checkbox beside it. Source mode continues to display only the original wikilink, keeping the Markdown portable and easy to edit.
 
 ## Installation
 

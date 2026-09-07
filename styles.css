@@ -16,3 +16,14 @@
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+
+.markdown-source-view.mod-cm6 .wiki-task-status-editor-widget {
+  display: inline-flex;
+  align-items: baseline;
+  margin-right: var(--size-2-2);
+}
+
+.markdown-source-view.mod-cm6 .wiki-task-status-editor-widget > input.task-list-item-checkbox {
+  margin: 0;
+  transform: translateY(0.12em);
+}
